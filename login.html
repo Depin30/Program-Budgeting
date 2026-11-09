@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('tema'); } catch (e) {}
+            if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            document.documentElement.dataset.theme = t;
+        })();
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Manajemen Prioritas Asset</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --canvas:#EDF0EE; --ink:#16262B; --muted:#5E6F72; --line:#DDE3E1; --alt:#F4F7F6;
+            --deep:#12353B; --accent:#0F7B6C; --accent-d:#0B5F53; --neg:#B93A28; --negbg:#FBE9E5;
+        }
+        * { box-sizing:border-box; }
+        body { margin:0; min-height:100vh; background:var(--canvas); color:var(--ink); font:14px/1.5 'IBM Plex Sans', system-ui, sans-serif; -webkit-font-smoothing:antialiased; display:flex; align-items:center; justify-content:center; padding:16px; }
+        :focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+        .panel { width:100%; max-width:26rem; background:#fff; border:1px solid var(--line); border-radius:16px; padding:36px 32px; box-shadow:0 18px 50px rgba(18,53,59,.12); }
+        .app { font-size:13px; font-weight:600; color:var(--accent-d); margin-bottom:10px; }
+        .panel h1 { font:800 26px/1.1 'Bricolage Grotesque', sans-serif; letter-spacing:-.015em; margin:0 0 6px; }
+        .panel .sub { margin:0 0 26px; color:var(--muted); font-size:13px; }
+        form { display:flex; flex-direction:column; gap:16px; }
+        label { display:block; font-size:13px; font-weight:600; color:#3B4D50; margin-bottom:6px; }
+        input { width:100%; font:500 14px 'IBM Plex Sans', sans-serif; color:var(--ink); background:var(--alt); border:1px solid var(--line); border-radius:10px; padding:12px 14px; transition:border-color .15s, background .15s; }
+        input:hover { border-color:#B8C5C2; }
+        input:focus { outline:2px solid var(--accent); outline-offset:0; background:#fff; border-color:var(--accent); }
+        input::placeholder { color:#93A2A4; }
+        input.invalid { border-color:var(--neg); background:var(--negbg); }
+        input.invalid:focus { outline-color:var(--neg); }
+        .submit { margin-top:6px; width:100%; font:600 14.5px 'IBM Plex Sans', sans-serif; color:#fff; background:var(--accent); border:0; border-radius:10px; padding:13px; cursor:pointer; transition:background .15s; }
+        .submit:hover:not(:disabled) { background:var(--accent-d); }
+        .submit:disabled { opacity:.7; cursor:progress; }
+
+        /* Notifikasi */
+        .toast { position:fixed; top:18px; left:50%; transform:translate(-50%,-16px); opacity:0; pointer-events:none; z-index:50; display:flex; align-items:center; gap:10px; max-width:calc(100% - 32px); padding:12px 18px 12px 14px; border-radius:12px; font-weight:600; font-size:13.5px; color:#fff; box-shadow:0 10px 30px rgba(0,0,0,.22); transition:opacity .25s, transform .25s; }
+        .toast.show { opacity:1; transform:translate(-50%,0); }
+        .toast svg { width:20px; height:20px; flex:none; }
+        .toast-ok { background:var(--accent-d); }
+        .toast-err { background:#A63322; }
+        @media (prefers-reduced-motion:reduce) { .toast { transition:none; } }
+
+        @media (max-width:480px) { .panel { padding:28px 22px; } }
+        .tema { position:fixed; top:16px; right:16px; width:42px; height:42px; border-radius:50%; border:1px solid var(--line); background:#fff; color:var(--muted); display:grid; place-items:center; cursor:pointer; z-index:5; }
+        .tema:hover { color:var(--ink); }
+        .tema svg { width:20px; height:20px; }
+        .ic-sun, html[data-theme="dark"] .ic-moon { display:none; }
+        html[data-theme="dark"] .ic-sun { display:block; }
+        html[data-theme="dark"] { color-scheme:dark; --canvas:#0D1A1D; --ink:#E2ECEA; --muted:#93A9AB; --line:#264046; --alt:#192F34; --deep:#12353B; --accent:#17897A; --accent-d:#0F6A5D; --neg:#F0806E; --negbg:#3A1F1B; }
+        html[data-theme="dark"] .panel, html[data-theme="dark"] .tema { background:#13252A; }
+        html[data-theme="dark"] label { color:var(--ink); }
+        html[data-theme="dark"] input:hover { border-color:#3C5C63; }
+        html[data-theme="dark"] input:focus { background:#13252A; }
+        html[data-theme="dark"] .app { color:#7FDCCB; }
+    </style>
+</head>
+<body>
+    <button type="button" class="tema" onclick="toggleTema()" aria-label="Ganti mode terang atau gelap" title="Ganti mode terang atau gelap"><svg class="ic-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg><svg class="ic-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4l1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4l1.4-1.4"/></svg></button>
+    <div id="toast" class="toast" role="status" aria-live="polite">
+        <svg id="toastIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"></svg>
+        <span id="toastText"></span>
+    </div>
+
+    <main class="panel">
+            <div class="app">Manajemen Prioritas Asset</div>
+            <h1>Selamat Datang</h1>
+            <p class="sub">Silakan login untuk mengelola data asset dan anggaran.</p>
+
+            <form id="loginForm">
+                <div>
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Masukkan username..." autocomplete="username" required>
+                </div>
+                <div>
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Masukkan password..." autocomplete="current-password" required>
+                </div>
+                <button type="submit" id="btnLogin" class="submit">Login</button>
+            </form>
+    </main>
+
+    <script>
+        function toggleTema() {
+            const d = document.documentElement;
+            const next = d.dataset.theme === 'dark' ? 'light' : 'dark';
+            d.dataset.theme = next;
+            try { localStorage.setItem('tema', next); } catch (e) {}
+        }
+
+        const toastEl = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+        const toastIcon = document.getElementById('toastIcon');
+        let toastTimer;
+
+        const ICON_OK = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>';
+        const ICON_ERR = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 8v5m0 3.5v.01M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/>';
+
+        function showToast(type, message, duration = 4000) {
+            clearTimeout(toastTimer);
+            toastEl.className = 'toast ' + (type === 'ok' ? 'toast-ok' : 'toast-err');
+            toastIcon.innerHTML = type === 'ok' ? ICON_OK : ICON_ERR;
+            toastText.textContent = message;
+            requestAnimationFrame(() => toastEl.classList.add('show'));
+            if (duration) toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+        }
+
+        const userInput = document.getElementById('username');
+        const passInput = document.getElementById('password');
+        const btnLogin = document.getElementById('btnLogin');
+
+        [userInput, passInput].forEach(el => el.addEventListener('input', () => {
+            userInput.classList.remove('invalid');
+            passInput.classList.remove('invalid');
+        }));
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = userInput.value;
+            const password = passInput.value;
+            let success = false;
+
+            btnLogin.disabled = true;
+            btnLogin.textContent = 'Memproses...';
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok && data.success) {
+                    success = true;
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('username', data.user.username);
+                    localStorage.setItem('token', data.token || '');
+                    localStorage.setItem('role', data.user.role || 'admin');
+                    localStorage.setItem('departemen', data.user.departemen || '');
+                    showToast('ok', `Login berhasil. Selamat datang, ${data.user.username}!`, 0);
+                    setTimeout(() => { window.location.href = '/index.html'; }, 1400);
+                } else {
+                    // Kredensial ditolak: pesan sengaja tidak menyebut mana yang salah
+                    const rejected = [400, 401, 403, 404].includes(res.status) || res.ok;
+                    userInput.classList.add('invalid');
+                    passInput.classList.add('invalid');
+                    passInput.focus();
+                    showToast('err', rejected ? 'Username atau password salah.' : (data.message || 'Login gagal.'));
+                }
+            } catch (err) {
+                showToast('err', 'Terjadi kesalahan koneksi ke server.');
+            } finally {
+                if (!success) {
+                    btnLogin.disabled = false;
+                    btnLogin.textContent = 'Login';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
